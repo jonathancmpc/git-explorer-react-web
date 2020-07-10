@@ -4,7 +4,7 @@ import api from '../../services/api';
 
 import logoImg from '../../assets/logo.svg';
 
-import { Title, Form, Repositories } from './style';
+import { Title, Form, Repositories, Error } from './style';
 
 interface Repository {
   // Atenção: não é necessário informa a tipagem de tudo que o repositório tem, pois são muito dados, mas colocamos somente as informações que eu vou utilizar
@@ -20,6 +20,9 @@ const Dashboard: React.FC = () => {
   // Criando um estado só para armazenar o valor do input do formulário
   const [newRepo, setNewRepo] = useState('');
 
+  // Criando um estado para erros, quando tivermos erros ele joga nesse estado
+  const [inputError, setInputError] = useState('');
+
   const [repositories, setRepositories] = useState<Repository[]>([]);
 
   // A função abaixo recebe como parâmetro o evento de submit do formulário
@@ -28,15 +31,27 @@ const Dashboard: React.FC = () => {
     // Consumir API do Github
     // Salvar novo repositório no estado
 
-    event.preventDefault(); // Não deixa a página recarregar após o submit
+    event.preventDefault(); // Não deixa a página recarregar após o submit, sempre tem que vir no começo
 
-    // Chamada a API
-    const response = await api.get<Repository>(`repos/${newRepo}`);
+    // Verificando se o input está vazio e retornando erro
+    if (!newRepo) {
+      setInputError('Digite um repositório válido (autor/repositório)');
+      return; // Se não passarmos o return ele vai continuar o código
+    }
 
-    const repository = response.data;
+    // Tratando o erro se a API não encontrar o repositório
+    try {
+      // Chamada a API
+      const response = await api.get<Repository>(`repos/${newRepo}`);
 
-    setRepositories([...repositories, repository]);
-    setNewRepo(''); // Limpando o campo de input
+      const repository = response.data;
+
+      setRepositories([...repositories, repository]);
+      setNewRepo(''); // Limpando o campo de input
+      setInputError(''); // Limpando erro
+    } catch {
+      setInputError('Repositório não encontrado, digite um repositório válido');
+    }
   }
 
   return (
@@ -44,8 +59,8 @@ const Dashboard: React.FC = () => {
       <img src={logoImg} alt="Github Explorer" />
       <Title>Explore repositórios no Github</Title>
 
-      {/* Toda vez que o formulário for submetido, chama a função handleAddRepository */}
-      <Form onSubmit={handleAddRepository}>
+      {/* Toda vez que o formulário for submetido, chama a função handleAddRepository, o hasError é passado para verificar se houve erro no formulário(transformamos em Boolean, pois se for true existe erro), então capturamos essa função no styled component(css) para deixar o input com borda vermelha. Para utilizar o hasError, temos que declarar no nosso styled.ts a interface FormProps e passar em Form */}
+      <Form hasError={Boolean(inputError)} onSubmit={handleAddRepository}>
         <input
           value={newRepo} // texto do input
           onChange={e => setNewRepo(e.target.value)} // Quando o usuário altera o valor do input recebemos um evento(e), que tem o valor disponível através do e.target.value
@@ -53,6 +68,9 @@ const Dashboard: React.FC = () => {
         />
         <button type="submit">Pesquisar</button>
       </Form>
+
+      {/* Mostrando a mensagem de erro logo abaixo do nosso repositório com uma simplificação do if, se existir erro mostra o erro */}
+      {inputError && <Error>{inputError}</Error>}
 
       <Repositories>
         {repositories.map(repository => (
