@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { FiChevronRight } from 'react-icons/fi'; /* Importando ícones, neste caso estamos importando o ícone FiChevronRight. */
 import api from '../../services/api';
 
@@ -23,7 +23,26 @@ const Dashboard: React.FC = () => {
   // Criando um estado para erros, quando tivermos erros ele joga nesse estado
   const [inputError, setInputError] = useState('');
 
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+  // Usando o useState para listar os repositórios pesquisados, porém ele verifica se já tem uma lista de repositórios pesquisada pelo usuário no Local Storage
+  const [repositories, setRepositories] = useState<Repository[]>(() => {
+    const repositoriesLocalStorage = localStorage.getItem(
+      '@GitHubExplorer:repositories',
+    );
+
+    if (repositoriesLocalStorage) {
+      return JSON.parse(repositoriesLocalStorage);
+    }
+
+    return [];
+  });
+
+  // Salvando no Storage toda vez que a variável repositories for alterada
+  useEffect(() => {
+    localStorage.setItem(
+      '@GitHubExplorer:repositories',
+      JSON.stringify(repositories),
+    );
+  }, [repositories]);
 
   // A função abaixo recebe como parâmetro o evento de submit do formulário
   async function handleAddRepository(event: FormEvent<HTMLFormElement>) {
