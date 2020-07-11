@@ -1,7 +1,14 @@
 import React from 'react';
+import { useRouteMatch } from 'react-router-dom';
+
+interface RouterParams {
+  repository: string;
+}
 
 const Repository: React.FC = () => {
-  return <h1>Repository</h1>;
+  const { params } = useRouteMatch<RouterParams>();
+
+  return <h1>Repository:{params.repository}</h1>;
 };
 
 export default Repository;
